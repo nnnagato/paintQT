@@ -14,6 +14,7 @@
 #include <QString>
 #include <QDebug>
 #include <QThread>
+#include <QFileDialog>
 
 GLView :: GLView(QWidget *parent, Qt::WindowFlags f)
     : QWidget(parent, f)
@@ -41,18 +42,22 @@ GLView :: GLView(QWidget *parent, Qt::WindowFlags f)
     rectButton.setParent(this);
     ellipseButton.setParent(this);
     penButton.setParent(this);
+    saveButton.setParent(this);
     lineButton.setMinimumSize(btnSize);
     rectButton.setMinimumSize(btnSize);
     ellipseButton.setMinimumSize(btnSize);
+    saveButton.setMinimumSize(btnSize);
     lineButton.setGeometry(QRect(QPoint(0,0),btnSize));
     rectButton.setGeometry(QRect(QPoint(100,0),btnSize));
     ellipseButton.setGeometry(QRect(QPoint(200,0),btnSize));
     penButton.setGeometry(QRect(QPoint(300,0),btnSize));
+    saveButton.setGeometry(QRect(QPoint(800,0),btnSize));
     penButton.setParent(this);
     lineButton.setText("Линия");
     rectButton.setText("Прямоугольник");
     ellipseButton.setText("Элипс");
     penButton.setText("Карандаш");
+    saveButton.setText("Сохранить как");
 
 
     //connecting buttons handlers
@@ -69,6 +74,10 @@ GLView :: GLView(QWidget *parent, Qt::WindowFlags f)
 
     QObject::connect(&penButton, &QPushButton::clicked, [=]() {
         on_penButton_clicked();
+    });
+
+    QObject::connect(&saveButton, &QPushButton::clicked, [=]() {
+        on_saveButton_clicked();
     });
 
 }
@@ -155,6 +164,22 @@ void GLView::on_penButton_clicked()
     currentTool = 3;
 }
 
+void GLView::on_saveButton_clicked()
+{
+    QString filename = QFileDialog::getSaveFileName(this, "Save as");
+
+    if(filename.isEmpty())
+        return;
+    QFile file(filename);
+    if (!file.open(QIODevice::WriteOnly | QIODevice::Text))
+         return;
+
+    QPixmap pic = QPixmap::grabWidget(this);
+    pic.save(filename, 0, 1);
+
+     file.close();
+}
+
 void GLView::mousePressEvent(QMouseEvent* event)
 {
     pressed = true;
@@ -168,10 +193,10 @@ void GLView::mousePressEvent(QMouseEvent* event)
 
 void GLView::getPositions()
 {
-    upperPosition.setX((std::min(previousPress.x(), currentPosition.x()))/z_scale);
-    upperPosition.setY((std::min(previousPress.y(), currentPosition.y()))/z_scale);
-    lowerPosition.setX((std::max(previousPress.x(), currentPosition.x()))/z_scale);
-    lowerPosition.setY((std::max(previousPress.y(), currentPosition.y()))/z_scale);
+    upperPosition.setX((std::min(previousPress.x(), currentPosition.x())));
+    upperPosition.setY((std::min(previousPress.y(), currentPosition.y())));
+    lowerPosition.setX((std::max(previousPress.x(), currentPosition.x())));
+    lowerPosition.setY((std::max(previousPress.y(), currentPosition.y())));
 };
 
 void GLView::mouseReleaseEvent(QMouseEvent* event)

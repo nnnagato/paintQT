@@ -33,6 +33,7 @@ private:
     QPushButton rectButton;
     QPushButton ellipseButton;
     QPushButton penButton;
+    QPushButton saveButton;
 
 protected:
     void paintEvent(QPaintEvent *event);
@@ -46,6 +47,7 @@ public slots:
     void on_rectButton_clicked();
     void on_ellipseButton_clicked();
     void on_penButton_clicked();
+    void on_saveButton_clicked();
 };
 
 
