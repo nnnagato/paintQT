@@ -34,6 +34,8 @@ private:
     QPushButton ellipseButton;
     QPushButton penButton;
     QPushButton saveButton;
+    void hideButtons();
+    void showButtons();
 
 protected:
     void paintEvent(QPaintEvent *event);

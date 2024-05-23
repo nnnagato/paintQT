@@ -173,11 +173,11 @@ void GLView::on_saveButton_clicked()
     QFile file(filename);
     if (!file.open(QIODevice::WriteOnly | QIODevice::Text))
          return;
-
+    hideButtons();
     QPixmap pic = QPixmap::grabWidget(this);
     pic.save(filename, 0, 1);
-
-     file.close();
+    file.close();
+    showButtons();
 }
 
 void GLView::mousePressEvent(QMouseEvent* event)
@@ -197,6 +197,27 @@ void GLView::getPositions()
     upperPosition.setY((std::min(previousPress.y(), currentPosition.y())));
     lowerPosition.setX((std::max(previousPress.x(), currentPosition.x())));
     lowerPosition.setY((std::max(previousPress.y(), currentPosition.y())));
+}
+
+void GLView::hideButtons()
+{
+    lineButton.setHidden(true);
+    rectButton.setHidden(true);
+    ellipseButton.setHidden(true);
+    penButton.setHidden(true);
+    saveButton.setHidden(true);
+    coords.setHidden(true);
+}
+
+void GLView::showButtons()
+{
+    lineButton.setHidden(false);
+    rectButton.setHidden(false);
+    ellipseButton.setHidden(false);
+    penButton.setHidden(false);
+    saveButton.setHidden(false);
+    coords.setHidden(false);
+
 };
 
 void GLView::mouseReleaseEvent(QMouseEvent* event)
@@ -212,7 +233,7 @@ void GLView::mouseReleaseEvent(QMouseEvent* event)
         update(region);
 //    if(event -> button() == Qt::MiddleButton)
 //    {
-//        movement = false;
+//        hideButtons();
 //    }
 
 };
