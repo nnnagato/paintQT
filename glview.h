@@ -9,6 +9,8 @@
 #include <QToolButton>
 #include <QPushButton>
 #include <QThread>
+#include <QPixmap>
+#include <QGraphicsPixmapItem>
 
 class GLView : public QWidget
 {
@@ -16,9 +18,9 @@ public:
     GLView(QWidget* parent = nullptr, Qt::WindowFlags f = Qt::WindowFlags());
     int currentTool;
     void setCoordinates(int x, int y);
-//    qreal z_scale {1.0};
     QPointF z_camPos {0., 0.};
     qreal z_scale {1.0};
+    QPixmap* pix = new QPixmap(2000,2000);
 
 private:
     void getPositions();
@@ -36,6 +38,7 @@ private:
     QPushButton saveButton;
     void hideButtons();
     void showButtons();
+    void drawFigure();
 
 protected:
     void paintEvent(QPaintEvent *event);

@@ -1,5 +1,4 @@
 #include "glview.h"
-#include "blinks.h"
 #include "mainwindow.h"
 #include "qthread.h"
 
@@ -15,6 +14,9 @@
 #include <QDebug>
 #include <QThread>
 #include <QFileDialog>
+#include <QPixmap>
+#include <QGraphicsPixmapItem>
+#include <QGraphicsScene>
 
 GLView :: GLView(QWidget *parent, Qt::WindowFlags f)
     : QWidget(parent, f)
@@ -27,6 +29,8 @@ GLView :: GLView(QWidget *parent, Qt::WindowFlags f)
     this -> setWindowState(Qt::WindowMaximized);
     this -> setWindowTitle("Workspace");
     this -> setMouseTracking(true);
+    this -> setStyleSheet("background : white");
+    pix -> fill(Qt::white);
 
 
     //setting the coordinates label
@@ -97,14 +101,97 @@ void GLView::setCoordinates(int x, int y)
 void GLView::paintEvent(QPaintEvent* event)
 {    
     Q_UNUSED(event);
+
     QPainter painter(this);
-    painter.setPen(Qt::red);
-//    painter.translate(z_camPos);
     if(movement)
     {
         painter.scale(z_scale, z_scale);
         movement = false;
     }
+    painter.drawPixmap(0, 0, *pix);
+    painter.end();
+
+}
+
+void GLView::on_lineButton_clicked()
+{
+    currentTool = 0;
+}
+
+void GLView::on_rectButton_clicked()
+{
+    currentTool = 1;
+}
+
+void GLView::on_ellipseButton_clicked()
+{
+    currentTool = 2;
+}
+
+void GLView::on_penButton_clicked()
+{
+    currentTool = 3;
+}
+
+void GLView::on_saveButton_clicked()
+{
+    QString filename = QFileDialog::getSaveFileName(this, "Save as");
+
+    if(filename.isEmpty())
+        return;
+
+    QFile file(filename);
+
+    if (!file.open(QIODevice::WriteOnly | QIODevice::Text))
+         return;
+
+    hideButtons();
+    pix->save(filename,0,1);
+    file.close();
+    showButtons();
+}
+
+void GLView::mousePressEvent(QMouseEvent* event)
+{
+    pressed = true;
+    previousPress = event->pos();
+};
+
+void GLView::getPositions()
+{
+    upperPosition.setX((std::min(previousPress.x(), currentPosition.x())));
+    upperPosition.setY((std::min(previousPress.y(), currentPosition.y())));
+    lowerPosition.setX((std::max(previousPress.x(), currentPosition.x())));
+    lowerPosition.setY((std::max(previousPress.y(), currentPosition.y())));
+}
+
+void GLView::hideButtons()
+{
+    lineButton.setHidden(true);
+    rectButton.setHidden(true);
+    ellipseButton.setHidden(true);
+    penButton.setHidden(true);
+    saveButton.setHidden(true);
+    coords.setHidden(true);
+}
+
+void GLView::showButtons()
+{
+    lineButton.setHidden(false);
+    rectButton.setHidden(false);
+    ellipseButton.setHidden(false);
+    penButton.setHidden(false);
+    saveButton.setHidden(false);
+    coords.setHidden(false);
+
+}
+
+void GLView::drawFigure()
+{
+    QPainter painter(pix);
+    painter.setPen(Qt::red);
+
+
     switch (currentTool) {
     case 0: //line
         painter.drawLine(previousPress.x(),
@@ -139,85 +226,8 @@ void GLView::paintEvent(QPaintEvent* event)
 
     default:
         break;
-
     }
-
-}
-
-void GLView::on_lineButton_clicked()
-{
-    currentTool = 0;
-}
-
-void GLView::on_rectButton_clicked()
-{
-    currentTool = 1;
-}
-
-void GLView::on_ellipseButton_clicked()
-{
-    currentTool = 2;
-}
-
-void GLView::on_penButton_clicked()
-{
-    currentTool = 3;
-}
-
-void GLView::on_saveButton_clicked()
-{
-    QString filename = QFileDialog::getSaveFileName(this, "Save as");
-
-    if(filename.isEmpty())
-        return;
-    QFile file(filename);
-    if (!file.open(QIODevice::WriteOnly | QIODevice::Text))
-         return;
-    hideButtons();
-    QPixmap pic = QPixmap::grabWidget(this);
-    pic.save(filename, 0, 1);
-    file.close();
-    showButtons();
-}
-
-void GLView::mousePressEvent(QMouseEvent* event)
-{
-    pressed = true;
-    previousPress = event->pos();
-//    if(event -> button() == Qt::MiddleButton)
-//    {
-//        movement=true;
-//        currentTool = -1;
-//    }
-};
-
-void GLView::getPositions()
-{
-    upperPosition.setX((std::min(previousPress.x(), currentPosition.x())));
-    upperPosition.setY((std::min(previousPress.y(), currentPosition.y())));
-    lowerPosition.setX((std::max(previousPress.x(), currentPosition.x())));
-    lowerPosition.setY((std::max(previousPress.y(), currentPosition.y())));
-}
-
-void GLView::hideButtons()
-{
-    lineButton.setHidden(true);
-    rectButton.setHidden(true);
-    ellipseButton.setHidden(true);
-    penButton.setHidden(true);
-    saveButton.setHidden(true);
-    coords.setHidden(true);
-}
-
-void GLView::showButtons()
-{
-    lineButton.setHidden(false);
-    rectButton.setHidden(false);
-    ellipseButton.setHidden(false);
-    penButton.setHidden(false);
-    saveButton.setHidden(false);
-    coords.setHidden(false);
-
+    update();
 };
 
 void GLView::mouseReleaseEvent(QMouseEvent* event)
@@ -225,20 +235,10 @@ void GLView::mouseReleaseEvent(QMouseEvent* event)
     pressed = false;
     currentPosition = event -> pos();
     getPositions();
-    QRegion region(QRect(upperPosition.x(),
-                         upperPosition.y(),
-                         lowerPosition.x()-upperPosition.x()+1,
-                         lowerPosition.y()-upperPosition.y()+1));
     if(currentTool!=3)
-        update(region);
-//    if(event -> button() == Qt::MiddleButton)
-//    {
-//        hideButtons();
-//    }
+        drawFigure();
 
 };
-
-
 
 void GLView::mouseMoveEvent(QMouseEvent* event)
 {
@@ -246,17 +246,10 @@ void GLView::mouseMoveEvent(QMouseEvent* event)
     if(pressed == true && currentTool == 3)
     {
         currentPosition = event -> pos();
-        update(QRect(currentPosition.x(),
-                     currentPosition.y(),
-                     2,2));
+        drawFigure();
         previousPress = event -> pos();
     };
-//    if(movement)
-//    {
-//        QPointF deltaMouse = event -> pos() - previousPress;
-//        z_camPos -= deltaMouse;
-//        update();
-//    }
+
 
 }
 
@@ -267,8 +260,8 @@ void GLView::wheelEvent(QWheelEvent* event)
             z_scale / scaleCoef;
         z_scale = newScale;
         movement = true;
-        setCoordinates(event -> x(), event -> y());
-        repaint();
+        setCoordinates(event->x(),event->y());
+        update();
 
 }
 
