@@ -20,9 +20,12 @@
 
 GLView :: GLView(QWidget *parent, Qt::WindowFlags f)
     : QWidget(parent, f)
+    , coords(*new QLabel)
 {
+    pix = new QPixmap(2000, 2000);
+
     //starting tool = rect
-    currentTool = 1;
+    currentTool = ToolType::Rect;
 
 
      //setting up main workspace parametres
@@ -51,13 +54,13 @@ GLView :: GLView(QWidget *parent, Qt::WindowFlags f)
     rectButton.setMinimumSize(btnSize);
     ellipseButton.setMinimumSize(btnSize);
     saveButton.setMinimumSize(btnSize);
-    lineButton.setGeometry(QRect(QPoint(0,0),btnSize));
-    rectButton.setGeometry(QRect(QPoint(100,0),btnSize));
-    ellipseButton.setGeometry(QRect(QPoint(200,0),btnSize));
-    penButton.setGeometry(QRect(QPoint(300,0),btnSize));
-    saveButton.setGeometry(QRect(QPoint(800,0),btnSize));
+    lineButton.setGeometry(QRect(QPoint(0,  0), btnSize));
+    rectButton.setGeometry(QRect(QPoint(100,  0), btnSize));
+    ellipseButton.setGeometry(QRect(QPoint(200,  0), btnSize));
+    penButton.setGeometry(QRect(QPoint(300,  0), btnSize));
+    saveButton.setGeometry(QRect(QPoint(800,  0), btnSize));
     penButton.setParent(this);
-    lineButton.setText("Линия");
+    lineButton.setText(tr("Линия"));
     rectButton.setText("Прямоугольник");
     ellipseButton.setText("Элипс");
     penButton.setText("Карандаш");
@@ -72,7 +75,8 @@ GLView :: GLView(QWidget *parent, Qt::WindowFlags f)
         on_rectButton_clicked();
     });
 
-    QObject::connect(&ellipseButton, &QPushButton::clicked, [=]() {
+    QObject::connect(&ellipseButton, &QPushButton::clicked, [=]()
+    {
         on_ellipseButton_clicked();
     });
 
@@ -80,10 +84,7 @@ GLView :: GLView(QWidget *parent, Qt::WindowFlags f)
         on_penButton_clicked();
     });
 
-    QObject::connect(&saveButton, &QPushButton::clicked, [=]() {
-        on_saveButton_clicked();
-    });
-
+    QObject::connect(&saveButton, &QPushButton::clicked, this, &GLView::on_saveButton_clicked);
 }
 
 void GLView::setCoordinates(int x, int y)
@@ -115,22 +116,22 @@ void GLView::paintEvent(QPaintEvent* event)
 
 void GLView::on_lineButton_clicked()
 {
-    currentTool = 0;
+    currentTool = ToolType::Line;
 }
 
 void GLView::on_rectButton_clicked()
 {
-    currentTool = 1;
+    currentTool = ToolType::Rect;
 }
 
 void GLView::on_ellipseButton_clicked()
 {
-    currentTool = 2;
+    currentTool = ToolType::Ellipse;
 }
 
 void GLView::on_penButton_clicked()
 {
-    currentTool = 3;
+    currentTool = ToolType::Pen;
 }
 
 void GLView::on_saveButton_clicked()
@@ -191,36 +192,31 @@ void GLView::drawFigure()
     QPainter painter(pix);
     painter.setPen(Qt::red);
 
-
-    switch (currentTool) {
-    case 0: //line
+    switch (currentTool)
+    {
+    case ToolType::Line: //line
         painter.drawLine(previousPress.x(),
                          previousPress.y(),
                          currentPosition.x(),
                          currentPosition.y());
         break;
 
-    case 1: //rectangle
-        painter.drawRect(upperPosition.x(),
-                         upperPosition.y(),
-                         lowerPosition.x()-upperPosition.x(),
-                         lowerPosition.y()-upperPosition.y());
+    case ToolType::Rect: //rectangle
+        painter.drawRect(QRect(upperPosition, lowerPosition));
+
         break;
 
-    case 2://ellipse
+    case ToolType::Ellipse://ellipse
         painter.drawEllipse(upperPosition.x(),
                             upperPosition.y(),
                             lowerPosition.x()-upperPosition.x(),
                             lowerPosition.y()-upperPosition.y());
         break;
 
-    case 3://pen
-        if(pressed==true)
+    case ToolType::Pen://pen
+        if (pressed)
         {
-            painter.drawEllipse(QRect(currentPosition.x(),
-                                      currentPosition.y(),
-                                      2,
-                                      2));
+            painter.drawEllipse(QRect(currentPosition, QSize(2, 2)));
         }
         break;
 
@@ -233,36 +229,38 @@ void GLView::drawFigure()
 void GLView::mouseReleaseEvent(QMouseEvent* event)
 {
     pressed = false;
-    currentPosition = event -> pos();
+    currentPosition = event->pos();
     getPositions();
-    if(currentTool!=3)
-        drawFigure();
 
+    if (currentTool != ToolType::Pen)
+    {
+        drawFigure();
+    }
 };
 
 void GLView::mouseMoveEvent(QMouseEvent* event)
 {
     setCoordinates(event -> x(), event->y());
-    if(pressed == true && currentTool == 3)
+
+    if (pressed && currentTool == ToolType::Pen)
     {
         currentPosition = event -> pos();
         drawFigure();
         previousPress = event -> pos();
     };
-
-
 }
 
 void GLView::wheelEvent(QWheelEvent* event)
 {
-        const qreal scaleCoef = 1.1;
-        qreal newScale = event->angleDelta().y() > 0 ? z_scale * scaleCoef :
-            z_scale / scaleCoef;
-        z_scale = newScale;
-        movement = true;
-        setCoordinates(event->x(),event->y());
-        update();
+    const qreal scaleCoef = 1.1;
 
+    qreal newScale = event->angleDelta().y() > 0
+            ? z_scale * scaleCoef
+            : z_scale / scaleCoef;
+
+    z_scale = newScale;
+    movement = true;
+    setCoordinates(event->x(), event->y());
+
+    update();
 }
-
-

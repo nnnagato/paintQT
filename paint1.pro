@@ -9,16 +9,20 @@ CONFIG += c++17
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += \
-    glview.cpp \
-    main.cpp \
-    mainwindow.cpp
+    src/glview.cpp \
+    src/main.cpp \
+    src/mainwindow.cpp
 
 HEADERS += \
-    glview.h \
-    mainwindow.h
+    src/glview.h \
+    src/mainwindow.h
 
 FORMS += \
     mainwindow.ui
+
+INCLUDEPATH += \
+    src \
+    src/tools
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin

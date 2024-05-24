@@ -2,43 +2,32 @@
 #define GLVIEW_H
 
 #include "qmenu.h"
-#include <QOpenGLWidget>
 #include <QMouseEvent>
 #include <QString>
-#include <QLabel>
 #include <QToolButton>
 #include <QPushButton>
 #include <QThread>
-#include <QPixmap>
-#include <QGraphicsPixmapItem>
+
+class QLabel;
+
+
 
 class GLView : public QWidget
 {
+    enum class ToolType
+    {
+        Line,
+        Rect,
+        Ellipse,
+        Pen,
+    };
+
 public:
     GLView(QWidget* parent = nullptr, Qt::WindowFlags f = Qt::WindowFlags());
-    int currentTool;
-    void setCoordinates(int x, int y);
-    QPointF z_camPos {0., 0.};
-    qreal z_scale {1.0};
-    QPixmap* pix = new QPixmap(2000,2000);
 
-private:
-    void getPositions();
-    QPoint previousPress;
-    QPoint currentPosition;
-    QPoint upperPosition;
-    QPoint lowerPosition;
-    bool pressed = false;
-    bool movement = false;
-    QLabel coords;
-    QPushButton lineButton;
-    QPushButton rectButton;
-    QPushButton ellipseButton;
-    QPushButton penButton;
-    QPushButton saveButton;
-    void hideButtons();
-    void showButtons();
-    void drawFigure();
+    void setCoordinates(int x, int y);
+
+signals:
 
 protected:
     void paintEvent(QPaintEvent *event);
@@ -47,12 +36,38 @@ protected:
     void mouseMoveEvent(QMouseEvent *event);
     void wheelEvent(QWheelEvent *event);
 
-public slots:
+private slots:
     void on_lineButton_clicked();
     void on_rectButton_clicked();
     void on_ellipseButton_clicked();
     void on_penButton_clicked();
     void on_saveButton_clicked();
+
+private:
+    void getPositions();
+    void hideButtons();
+    void showButtons();
+    void drawFigure();
+
+private:
+    QLabel& coords;
+    QPushButton lineButton;
+    QPushButton rectButton;
+    QPushButton ellipseButton;
+    QPushButton penButton;
+    QPushButton saveButton;
+    QPixmap* pix = nullptr;
+
+    QPoint previousPress;
+    QPoint currentPosition;
+    QPoint upperPosition;
+    QPoint lowerPosition;
+    bool pressed = false;
+    bool movement = false;
+
+    QPointF z_camPos {0., 0.};
+    qreal z_scale {1.0};
+    ToolType currentTool;
 };
 
 
